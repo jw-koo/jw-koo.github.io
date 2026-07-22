@@ -22,14 +22,19 @@ const restartButton = document.querySelector('#restart-game');
 const scoreOutput = document.querySelector('#score');
 const highScoreOutput = document.querySelector('#high-score');
 const healthOutput = document.querySelector('#health');
+const feverStatusOutput = document.querySelector('#fever-status');
 const statusOutput = document.querySelector('#game-status');
 const directionButtons = document.querySelectorAll('[data-direction]');
+const gamePanel = document.querySelector('.game-panel');
 const context = canvas ? canvas.getContext('2d') : null;
 
 const BOARD_SIZE = 20;
 const CELL_SIZE = 20;
 const TICK_MS = 150;
 const START_HEALTH = 3;
+const FEVER_ITEM_MIN_MS = 20000;
+const FEVER_ITEM_MAX_MS = 30000;
+const FEVER_DURATION_TICKS = Math.ceil(6000 / TICK_MS);
 const directions = {
   up: { x: 0, y: -1 },
   down: { x: 0, y: 1 },
@@ -45,6 +50,7 @@ const keyDirections = {
 
 let snake = [];
 let food = null;
+let feverItem = null;
 let enemies = [];
 let direction = directions.right;
 let nextDirection = directions.right;
@@ -53,9 +59,14 @@ let health = START_HEALTH;
 let highScore = readHighScore();
 let gameTimer = null;
 let enemyTimer = null;
+let feverSpawnTimer = null;
+let feverTicksRemaining = 0;
 let isRunning = false;
 let isPaused = false;
 let touchStart = null;
+let pickupEffects = [];
+const prefersReducedMotion = typeof window.matchMedia === 'function'
+  && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function readHighScore() {
   try {
@@ -80,7 +91,8 @@ function samePosition(first, second) {
 function isOccupied(position) {
   return snake.some((segment) => samePosition(segment, position))
     || enemies.some((enemy) => samePosition(enemy, position))
-    || (food && samePosition(food, position));
+    || (food && samePosition(food, position))
+    || (feverItem && samePosition(feverItem, position));
 }
 
 function randomPosition() {
@@ -95,6 +107,13 @@ function randomPosition() {
 
 function spawnFood() {
   food = randomPosition();
+}
+
+function spawnFeverItem() {
+  if (!isRunning || isPaused || feverItem || feverTicksRemaining > 0) return;
+  feverItem = randomPosition();
+  if (feverItem) setStatus('피버 아이템이 나타났습니다.');
+  draw();
 }
 
 function spawnEnemy() {
@@ -122,17 +141,53 @@ function scheduleEnemy() {
   }, Math.max(5000, 12000 - getDifficultyLevel() * 1500) + Math.floor(Math.random() * 2001));
 }
 
+function scheduleFeverItem() {
+  window.clearTimeout(feverSpawnTimer);
+  if (!isRunning || isPaused || feverItem || feverTicksRemaining > 0) return;
+  const delay = FEVER_ITEM_MIN_MS + Math.floor(Math.random() * (FEVER_ITEM_MAX_MS - FEVER_ITEM_MIN_MS + 1));
+  feverSpawnTimer = window.setTimeout(() => {
+    spawnFeverItem();
+    scheduleFeverItem();
+  }, delay);
+}
+
 function clearTimers() {
   window.clearInterval(gameTimer);
   window.clearTimeout(enemyTimer);
+  window.clearTimeout(feverSpawnTimer);
   gameTimer = null;
   enemyTimer = null;
+  feverSpawnTimer = null;
+}
+
+function clearPickupEffects() {
+  pickupEffects = [];
+}
+
+function createPickupEffect(position) {
+  pickupEffects.push({ ...position, age: 0, lifetime: prefersReducedMotion ? 1 : 10 });
+}
+
+function updatePickupEffects() {
+  pickupEffects = pickupEffects
+    .map((effect) => ({ ...effect, age: effect.age + 1 }))
+    .filter((effect) => effect.age < effect.lifetime);
 }
 
 function updateScore() {
   scoreOutput.textContent = String(score);
   highScoreOutput.textContent = String(highScore);
   healthOutput.textContent = String(health);
+  updateFeverStatus();
+}
+
+function updateFeverStatus() {
+  if (!feverStatusOutput || !gamePanel) return;
+  const active = feverTicksRemaining > 0;
+  gamePanel.classList.toggle('is-fever', active);
+  feverStatusOutput.textContent = active
+    ? `${Math.ceil((feverTicksRemaining * TICK_MS) / 1000)}초`
+    : (feverItem ? '아이템' : '대기');
 }
 
 function setStatus(message) {
@@ -143,9 +198,12 @@ function resetGame() {
   snake = [{ x: 10, y: 10 }, { x: 9, y: 10 }, { x: 8, y: 10 }];
   direction = directions.right;
   nextDirection = directions.right;
+  feverItem = null;
+  feverTicksRemaining = 0;
   enemies = [];
   score = 0;
   health = START_HEALTH;
+  clearPickupEffects();
   spawnFood();
   updateScore();
   draw();
@@ -155,6 +213,7 @@ function startLoop() {
   window.clearInterval(gameTimer);
   gameTimer = window.setInterval(tick, TICK_MS);
   scheduleEnemy();
+  scheduleFeverItem();
 }
 
 function startGame() {
@@ -174,6 +233,7 @@ function pauseGame() {
   isPaused = !isPaused;
   if (isPaused) {
     clearTimers();
+    clearPickupEffects();
     pauseButton.textContent = '계속하기';
     setStatus('일시정지되었습니다.');
   } else {
@@ -185,6 +245,7 @@ function pauseGame() {
 
 function restartGame() {
   clearTimers();
+  clearPickupEffects();
   isRunning = false;
   isPaused = false;
   startButton.textContent = '시작';
@@ -196,6 +257,9 @@ function restartGame() {
 
 function gameOver(message = '게임 오버! 재시작 버튼으로 다시 도전하세요.') {
   clearTimers();
+  clearPickupEffects();
+  feverItem = null;
+  feverTicksRemaining = 0;
   isRunning = false;
   isPaused = false;
   startButton.textContent = '시작';
@@ -224,6 +288,8 @@ function moveEnemies() {
 }
 
 function tick() {
+  updatePickupEffects();
+  const feverWasActive = feverTicksRemaining > 0;
   direction = nextDirection;
   const head = snake[0];
   const nextHead = { x: head.x + direction.x, y: head.y + direction.y };
@@ -234,16 +300,35 @@ function tick() {
     return;
   }
 
+  if (feverItem && samePosition(nextHead, feverItem)) {
+    feverItem = null;
+    feverTicksRemaining = FEVER_DURATION_TICKS;
+    createPickupEffect(nextHead);
+    setStatus('피버 모드! 6초 동안 바이러스를 먹을 수 있습니다.');
+    updateFeverStatus();
+    scheduleFeverItem();
+  }
+
   const hitEnemyIndex = enemies.findIndex((enemy) => samePosition(enemy, nextHead));
   if (hitEnemyIndex >= 0) {
     enemies.splice(hitEnemyIndex, 1);
-    health -= 1;
+    if (feverWasActive) {
+      score += 25;
+      if (score > highScore) {
+        highScore = score;
+        saveHighScore();
+      }
+      createPickupEffect(nextHead);
+      setStatus('바이러스를 먹었습니다. +25점!');
+    } else {
+      health -= 1;
+    }
     updateScore();
-    if (health <= 0) {
+    if (!feverWasActive && health <= 0) {
       gameOver('체력을 모두 잃었습니다. 재시작 버튼으로 다시 도전하세요.');
       return;
     }
-    setStatus(`바이러스와 충돌했습니다. 체력 ${health}칸 남음.`);
+    if (!feverWasActive) setStatus(`바이러스와 충돌했습니다. 체력 ${health}칸 남음.`);
   }
 
   snake.unshift(nextHead);
@@ -254,11 +339,22 @@ function tick() {
       saveHighScore();
     }
     spawnFood();
+    createPickupEffect(nextHead);
     setStatus('음식을 먹었습니다. 지렁이가 성장합니다.');
   } else {
     snake.pop();
   }
   moveEnemies();
+  if (feverWasActive) {
+    feverTicksRemaining -= 1;
+    if (feverTicksRemaining === 0) {
+      setStatus('피버 모드가 끝났습니다. 바이러스에 다시 주의하세요.');
+      scheduleFeverItem();
+    } else if (feverTicksRemaining % 7 === 0) {
+      setStatus(`피버 모드: ${Math.ceil((feverTicksRemaining * TICK_MS) / 1000)}초 남음.`);
+    }
+  }
+  updateFeverStatus();
   updateScore();
   draw();
 }
@@ -296,7 +392,29 @@ function draw() {
   context.textAlign = 'center';
   context.textBaseline = 'middle';
   enemies.forEach((enemy) => context.fillText('🦠', enemy.x * CELL_SIZE + CELL_SIZE / 2, enemy.y * CELL_SIZE + CELL_SIZE / 2));
+  if (feverItem) context.fillText('⚡', feverItem.x * CELL_SIZE + CELL_SIZE / 2, feverItem.y * CELL_SIZE + CELL_SIZE / 2);
   snake.forEach((segment, index) => drawCell(segment, index === 0 ? '#78e4c3' : '#4bbd9c'));
+  pickupEffects.forEach((effect) => {
+    const centerX = effect.x * CELL_SIZE + CELL_SIZE / 2;
+    const centerY = effect.y * CELL_SIZE + CELL_SIZE / 2;
+    const progress = effect.age / effect.lifetime;
+    context.save();
+    context.globalAlpha = 1 - progress;
+    context.strokeStyle = '#ffd166';
+    context.lineWidth = 2;
+    context.beginPath();
+    context.arc(centerX, centerY, 5 + progress * 14, 0, Math.PI * 2);
+    context.stroke();
+    if (!prefersReducedMotion) {
+      context.fillStyle = '#78e4c3';
+      for (let particle = 0; particle < 6; particle += 1) {
+        const angle = (Math.PI * 2 * particle) / 6;
+        const distance = 5 + progress * 16;
+        context.fillRect(centerX + Math.cos(angle) * distance - 1, centerY + Math.sin(angle) * distance - 1, 2, 2);
+      }
+    }
+    context.restore();
+  });
 }
 
 function handleSwipe(event) {

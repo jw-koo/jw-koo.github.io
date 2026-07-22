@@ -91,3 +91,42 @@
 - Content: Korean title, Games, Contact, relative assets present; removed blog URL absent.
 - Limitation: no browser interaction or mobile viewport exercise in this post-deploy pass.
 - Final state: `DEPLOYED`; live URL https://jw-koo.github.io.
+
+## Step 9 — Change request reloop
+
+- Mode/model: `CODEX_WORKER + CLAUDE_VERIFIER` / `claude-sonnet-5`; no fallback; current commit before changes `9b7285a`; no commit/push/deploy performed.
+- CR-001 before: Claude reproduced Projects link at `index.html:52` pointing to personal LinkedIn; Samsung candidate returned HTTP 200 with relevant title. Contact LinkedIn at `index.html:59` was confirmed unchanged.
+- CR-001 Act: changed `index.html:52` only to `https://www.samsung.com/us/support/answer/ANS10002538/` with Korean official-guide link text.
+- CR-001 after: Claude PASS; candidate HTTP 200, Contact LinkedIn unchanged, anchors/assets/content regression PASS; pre-existing `tidy` HTML5 warnings unchanged.
+- CR-002 before: Claude identified left-aligned wide-screen whitespace, single section rhythm, and 640px navigation breakpoint as design opportunities; baseline HTML/JS/HTTP/content checks PASS.
+- CR-002 Act: changed `index.html` and `styles.css` only; added hero focus card, section cards, centered/wider layout, and 720px responsive breakpoint.
+- CR-002 after: Claude PASS; 375/768/1440 analytical layout, overflow, contrast, focus, touch targets, reduced-motion, anchors, content, and game wiring regression PASS; no browser snapshot available.
+- CR-003 before: Claude reproduced food pickup changing score/growth/status without a distinct visual effect; existing timers and game behavior recorded.
+- CR-003 Act: changed `script.js` only; added bounded canvas pickup effect, one trigger per food pickup, cleanup on state transitions, and reduced-motion static fallback without adding timers.
+- CR-003 after: Claude PASS; Node syntax, stubbed pickup harness, effect lifetime/cleanup, no timer changes, gameplay controls/collision/score/difficulty, HTTP, responsive canvas, content, and console regression PASS.
+- CR-004 before: Claude reproduced unconditional virus health damage and no fever state. Baseline Node/HTTP PASS; exactly two existing timers and cleanup path recorded.
+- CR-004 status: `HITL_REQUIRED`; item spawn cadence, fever duration, virus-eating score, and whether health decreases during fever are unspecified in the request. No CR-004 Act performed.
+
+## Step 9 — HITL resolution
+
+- User confirmed CR-001 official Samsung link, CR-002 design direction, CR-003 effect style/duration, and CR-004 values: fever item every 20–30 seconds, 6-second duration, virus +25 points, no health loss during fever.
+- CR-004 is now unblocked for the next implementation loop; no code/test/commit/push/deploy was performed in this resolution step.
+
+## Step 9 — CR-004 implementation
+
+- Before: Claude reproduced no fever state; baseline Node syntax and local HTTP returned PASS, with exactly two existing timers and no fever terms.
+- Confirmed values: fever item every 20–30 seconds, 6-second duration, virus +25 points, no health loss during fever.
+- Act: added fever item/status markup in `index.html`, active-fever styling in `styles.css`, and fever state/spawn/expiry/virus-eating/cleanup logic in `script.js`; included a boundary correction so the 40th active tick remains fever-enabled before expiry.
+- After: Claude `claude-sonnet-5` exit 0; 55 deterministic assertions PASS, Node syntax PASS, local HTTP/assets PASS, controls/food/high-score/difficulty/reduced-motion/timer/anchor/content regression PASS.
+- Verified: spawn bounds, one-time acquisition, ARIA seconds, exact 40 ticks = 6 seconds, pause preservation, +25/no health loss, expiry damage, restart/game-over cleanup, 3 bounded timers, zero console exceptions in harness.
+- Limitation: real browser visual/touch verification `NOT_APPLICABLE`; no code failure found.
+- Final state: `DEPLOY_APPROVAL_REQUIRED`; no commit, push, or deployment performed.
+
+## Step 9 — Content and game guide enrichment
+
+- Request: expand the sparse About, Experience, Project, and Contact cards; add a clear explanation before the game starts.
+- Mode/model: `CODEX_WORKER + CLAUDE_VERIFIER` / `claude-sonnet-5`; no fallback; no commit/push/deploy.
+- Act: expanded confirmed profile/project details in `index.html`; added detail-grid, timeline, metadata, and contact-link styles; added game guide cards for goal, controls, and fever behavior. Game logic was unchanged.
+- After: Claude exit 0. Local asset references, HTML structure, new card/game-guide content, responsive layout analysis for 375/768/1440, Node syntax, and local HTTP all PASS. Existing deterministic game harness was not discoverable on disk, so it was not rerun.
+- Fingerprint: `index.html` 7358B / `styles.css` 7112B / `script.js` 14301B; uncommitted versus `9b7285a`.
+- Final state: `DEPLOY_APPROVAL_REQUIRED`; real browser visual/touch verification remains N/A; no commit, push, or deployment performed.

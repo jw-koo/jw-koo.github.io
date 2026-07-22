@@ -156,3 +156,7 @@ Claude CLI를 사용할 수 없을 때만 `CODEX_FALLBACK`으로 전환해 Codex
 | 7. 최종 검증 | 모든 구현 파일 | 코드 변경 없이 결과 정리 | Claude 전체 검증과 콘텐츠·보안 확인 | 모든 항목 PASS | `PASSED` |
 | 8. 배포 승인 대기 | `PASSED` 결과 | push·배포를 수행하지 않고 승인 요청 | 배포 전 체크리스트 확인 | 사용자의 명시적 push·배포 승인 | `DEPLOY_APPROVAL_REQUIRED` |
 | 9. 배포 | 승인된 검증 결과와 원격 설정 | 승인 범위 내 push/Pages 배포 수행 | 실 URL·자산·반응형·Games·게임 재검증 | `https://jw-koo.github.io`에서 정상 동작 | `DEPLOYED` 또는 `BLOCKED` |
+
+## Step 8 실행 순서
+
+`CR-001 공식 링크 교체 → CR-002 디자인 개선 → CR-003 아이템 획득 이펙트 → CR-004 피버 모드 → Claude 전체 회귀 검증` 순서로 진행한다. 각 Change Item은 변경 전 Claude 검증, Codex 최소 Act, 동일 Claude 검증을 수행하며, 실패 시 원인 하나·관련 파일만 최대 6회 Retry한다. 모든 검증 통과 전에는 commit·push·배포하지 않고, 미정 피버 규칙은 `HITL_REQUIRED`로 멈춘다.

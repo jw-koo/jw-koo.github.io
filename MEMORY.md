@@ -16,6 +16,7 @@
 - 프로필 사진: 사용하지 않음; 사이트 언어: 한국어
 - 게임 입력: 키보드·WASD·모바일 방향 버튼·스와이프
 - 게임 규칙: 음식·성장·점수·체력 감소·게임오버·난이도 상승
+- 확정 피버 규칙: 피버 아이템 20~30초마다 등장, 6초 지속, 바이러스 섭취 +25점, 피버 중 체력 감소 없음
 ## Goal
 - 정적 반응형 프로페셔널 웹사이트와 Games 지렁이 게임을 완성해 GitHub Pages에 배포한다.
 ## Scope / Out of Scope
@@ -24,14 +25,17 @@
 ## Execution
 - Mode: CODEX_WORKER + CLAUDE_VERIFIER; Claude 불가 시에만 CODEX_FALLBACK.
 - Claude model: `claude-sonnet-5` (`sonnet` 별칭).
+- Current commit: `9b7285a` (`Record deployed site verification`).
+- Git status: `main` aligned with `origin/main`; `AORR.md` modified and `CHANGE_REQUEST.md` untracked before Step 9.
+- Rollback 기준: 마지막 정상 배포 commit `9b7285a`; force push·hard reset 없이 변경 파일 단위 revert.
 - Last test: PASS — Claude 정적/게임/Node/로컬 HTTP 검증 완료.
 ## Current State
-- 상태: DEPLOYED — GitHub Pages 배포본 회귀 검증 PASS.
+- 상태: DEPLOY_APPROVAL_REQUIRED — CR-001~004 및 카드·게임 안내 보강 PASS; 실제 브라우저 검증은 N/A.
 - 완료 루프: Step 1~5 계획·스캐폴드, Step 7 Loop 1 페이지, Loop 2 게임 및 GAME Retry 1회.
-- 다음 루프: 필요 시 콘텐츠·기능 개선 후 동일 Verifier 회귀 검증.
-- Retry: GAME 1/6; 동일 fingerprint 반복 없음.
-- fingerprint: index.html 4854B, styles.css 4225B, script.js 9974B; untracked.
-- blocker: 없음.
+- 다음 루프: 사용자 승인 후 비밀정보 확인 → commit → push → 재배포 → Claude 배포본 회귀 검증.
+- Retry: Step 9 오류 0/6; 동일 fingerprint 반복 없음.
+- fingerprint: index.html 7358B, styles.css 7112B, script.js 14301B; uncommitted.
+- blocker: 사용자 commit·push·재배포 승인 및 실제 브라우저/시각·터치 검증.
 - 마지막 정상 commit·URL: `bccee06` (`Create static.yml`); https://jw-koo.github.io.
 ## Acceptance
 - 375px·768px·1440px, HTML/CSS/JS/게임/터치/HTTP/내부 링크/상대 경로/GitHub Pages 검증 전체 PASS 후 배포 승인 요청.
@@ -49,4 +53,6 @@
 |---|---|---|---|---|---|---|
 | Step 5 | 완료 | CODEX_WORKER + CLAUDE_VERIFIER · claude-sonnet-5 | index.html, styles.css, script.js | 정적 PASS; Node·HTTP N/A | 0 | 구현 진행 |
 | Step 7 Loop 1 | 완료 | CODEX_WORKER + CLAUDE_VERIFIER · claude-sonnet-5 | index.html | Contact 포함 정적 PASS; Node N/A | 0 | 게임 구현 |
-| Step 7 Loop 2 | DEPLOYED | CODEX_WORKER + CLAUDE_VERIFIER · claude-sonnet-5 | index.html, styles.css, script.js, .github/workflows/static.yml | 로컬·배포본/Node/HTTP PASS | 1 | 유지보수·추가 개선 |
+| Step 7 Loop 2 | DEPLOYED | CODEX_WORKER + CLAUDE_VERIFIER · claude-sonnet-5 | index.html, styles.css, script.js, .github/workflows/static.yml | 로컬·배포본/Node/HTTP PASS | 1 | Step 8 변경 요청 |
+| Step 9 CR-001~004 | DEPLOY_APPROVAL_REQUIRED | CODEX_WORKER + CLAUDE_VERIFIER · claude-sonnet-5 | index.html, styles.css, script.js, AORR.md, MEMORY.md, CHANGE_REQUEST.md | CR-001~004 PASS; browser N/A | 0 | 승인 후 재배포 |
+| Step 9 content/game guide | DEPLOY_APPROVAL_REQUIRED | CODEX_WORKER + CLAUDE_VERIFIER · claude-sonnet-5 | index.html, styles.css, MEMORY.md, AORR_LOG.md | 구조·콘텐츠·반응형·Node·HTTP PASS; 게임 회귀 harness 미발견 | 0 | 승인 후 재배포 |
