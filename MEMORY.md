@@ -26,13 +26,13 @@
 - Claude model: `claude-sonnet-5` (`sonnet` 별칭).
 - Last test: PASS — Claude 정적/게임/Node/로컬 HTTP 검증 완료.
 ## Current State
-- 상태: DEPLOY_APPROVAL_REQUIRED — 구현·정적·동적 로컬 검증 PASS.
+- 상태: DEPLOYED — GitHub Pages 배포본 회귀 검증 PASS.
 - 완료 루프: Step 1~5 계획·스캐폴드, Step 7 Loop 1 페이지, Loop 2 게임 및 GAME Retry 1회.
-- 다음 루프: 사용자 승인 후 비밀정보 확인 → commit → push → GitHub Pages 배포 → Claude 배포본 회귀 검증.
+- 다음 루프: 필요 시 콘텐츠·기능 개선 후 동일 Verifier 회귀 검증.
 - Retry: GAME 1/6; 동일 fingerprint 반복 없음.
 - fingerprint: index.html 4854B, styles.css 4225B, script.js 9974B; untracked.
-- blocker: 사용자 commit·push·배포 승인 대기.
-- 마지막 정상 commit·URL: 정상 commit 없음; 목표 URL https://jw-koo.github.io.
+- blocker: 없음.
+- 마지막 정상 commit·URL: `bccee06` (`Create static.yml`); https://jw-koo.github.io.
 ## Acceptance
 - 375px·768px·1440px, HTML/CSS/JS/게임/터치/HTTP/내부 링크/상대 경로/GitHub Pages 검증 전체 PASS 후 배포 승인 요청.
 ## Guardrails
@@ -49,4 +49,4 @@
 |---|---|---|---|---|---|---|
 | Step 5 | 완료 | CODEX_WORKER + CLAUDE_VERIFIER · claude-sonnet-5 | index.html, styles.css, script.js | 정적 PASS; Node·HTTP N/A | 0 | 구현 진행 |
 | Step 7 Loop 1 | 완료 | CODEX_WORKER + CLAUDE_VERIFIER · claude-sonnet-5 | index.html | Contact 포함 정적 PASS; Node N/A | 0 | 게임 구현 |
-| Step 7 Loop 2 | DEPLOY_APPROVAL_REQUIRED | CODEX_WORKER + CLAUDE_VERIFIER · claude-sonnet-5 | index.html, styles.css, script.js | 게임/정적/Node/HTTP PASS | 1 | 사용자 승인 후 commit·push·배포 |
+| Step 7 Loop 2 | DEPLOYED | CODEX_WORKER + CLAUDE_VERIFIER · claude-sonnet-5 | index.html, styles.css, script.js, .github/workflows/static.yml | 로컬·배포본/Node/HTTP PASS | 1 | 유지보수·추가 개선 |

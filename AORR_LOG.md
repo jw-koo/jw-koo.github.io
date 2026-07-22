@@ -82,3 +82,12 @@
 - Static sanity: relative stylesheet/script references and Games section present.
 - Errors: none affecting the repository; one curl loop invocation hit a harness permission artifact and was rerun as standalone calls successfully.
 - Final state: `DEPLOY_APPROVAL_REQUIRED`; no files changed by verification, no commit, push, or deployment performed.
+
+## Deployment after workflow update
+
+- Pull: `git pull --ff-only origin main` fast-forwarded `f663a4b` to `bccee06` (`Create static.yml`).
+- Deployment check: `https://jw-koo.github.io/`, `/styles.css`, and `/script.js` returned HTTP 200 with expected content types.
+- Claude model: `claude-sonnet-5`; deployed regression exit 0; fetched assets matched local files byte-for-byte; `node --check` on fetched `script.js` exit 0.
+- Content: Korean title, Games, Contact, relative assets present; removed blog URL absent.
+- Limitation: no browser interaction or mobile viewport exercise in this post-deploy pass.
+- Final state: `DEPLOYED`; live URL https://jw-koo.github.io.
